@@ -1,86 +1,91 @@
-// Array to hold the sports buttons that start the page.
-var topics = ["Football", "Soccer", "Basketball", "Golf", "Swimming", "Tennis", "Softball", "Baseball", "Boxing", "Climbing", "Track", "Lacrosse"];
+$(document).ready(function() {
 
-// Create a function that will render new buttons with the users input. 
+  var animals = [
+    "dog", "cat", "rabbit", "hamster", "skunk", "goldfish",
+    "bird", "ferret", "turtle", "sugar glider", "chinchilla",
+    "hedgehog", "hermit crab", "gerbil", "pygmy goat", "chicken",
+    "capybara", "teacup pig", "serval", "salamander", "frog"
+  ];
 
-function newButton() {
-    // clear out so multiple buttons do not pop up.
-    $("#sportsButtons").empty();
+  // function to make buttons and add to page
+  function populateButtons(arrayToUse, classToAdd, areaToAddTo) {
+    $(areaToAddTo).empty();
 
-    // For loop that will add the new buttons based off the array and also what they get from the user input. 
-    for (var i = 0; i < topics.length; i++) {
-        // This will create the new button on the fly.
-        var button = $("<button>");
-        // Add a class to the new button.
-        button.addClass("newSports");
-        // Add a data-attribute to the new button.
-        button.attr("data-name", topics[i]);
-        // adding the text to the button from the user input.
-        button.text(topics[i]);
-        // adding the new button the sportsButtons div.
-        $("#sportsButtons").append(button);
+    for (var i = 0; i < arrayToUse.length; i++) {
+      var a = $("<button>");
+      a.addClass(classToAdd);
+      a.attr("data-type", arrayToUse[i]);
+      a.text(arrayToUse[i]);
+      $(areaToAddTo).append(a);
     }
-}
 
+  }
 
+  $(document).on("click", ".animal-button", function() {
+    $("#animals").empty();
+    $(".animal-button").removeClass("active");
+    $(this).addClass("active");
 
-// function for buttons when they are clicked.
-$("#addSport").on("click", function(event) {
+    var type = $(this).attr("data-type");
+    var queryURL = "http://api.giphy.com/v1/gifs/search?q=" + type + "&api_key=dc6zaTOxFJmzC&limit=10";
 
-    // makes it so that you can press enter also and not just the submits button. 
-    event.preventDefault();
-
-    // grabs the user input and trims it and adds it to the new button on the page. 
-    var sport = $("#sports-input").val().trim();
-
-    // this line pushes the text input to the array. 
-    topics.push(sport);
-
-    // calling the button top run the first function of the array.
-    newButton();
-});
-
-    // calling the newButton function.
-    newButton();
-
-//create a function to hold the event listener for the buttons.
-$("#sportsButtons").on("click", function () {
-
-    // Create a variable that will hold the queryURL
-    var queryURL = "https://api.giphy.com/v1/gifs/search?q=" + "Giphy sport" + "&api_key=yi343B3PZW4YT3Sm5QdlWFWLIB2ZXvIw"
-
-    // Creating the ajax call. 
     $.ajax({
-        URL: queryURL,
-        Method: "GET"
+      url: queryURL,
+      method: "GET"
     })
-        // create a function that for the ajax response.
-        .then(function (response) {
-            console.log(queryURL);
-            console.log(response);
+    .then(function(response) {
+      var results = response.data;
 
-            // making a variable called feedBack for the ajax request.
-            var feedBack = response.data;
+      for (var i = 0; i < results.length; i++) {
+        var animalDiv = $("<div class=\"animal-item\">");
 
-            // for loop to loop through all the results.
-            for (var i=0; i < feedBack.length; i++) {
+        var rating = results[i].rating;
 
-                // Creating a P tag to hold the items rating.
-                var p = $("<p>").text("Rating: " + results[i].rating);
+        var p = $("<p>").text("Rating: " + rating);
 
-                // create an image tag on the fly
-                var image = $("<img>");
+        var animated = results[i].images.fixed_height.url;
+        var still = results[i].images.fixed_height_still.url;
 
-                // setting the src attribute.
-                image.attr("src", feedBack[i].images.fixed_height.url);
+        var animalImage = $("<img>");
+        animalImage.attr("src", still);
+        animalImage.attr("data-still", still);
+        animalImage.attr("data-animate", animated);
+        animalImage.attr("data-state", "still");
+        animalImage.addClass("animal-image");
 
-                // appending the image to the sportsGiphs div
-                $("#sportsGiphs").append(p);
-                $("#sportsGiphs").append(image);
+        animalDiv.append(p);
+        animalDiv.append(animalImage);
 
-            }
+        $("#animals").append(animalDiv);
+      }
+    });
+  });
 
-        })
+  $(document).on("click", ".animal-image", function() {
 
-})
+    var state = $(this).attr("data-state");
 
+    if (state === "still") {
+      $(this).attr("src", $(this).attr("data-animate"));
+      $(this).attr("data-state", "animate");
+    }
+    else {
+      $(this).attr("src", $(this).attr("data-still"));
+      $(this).attr("data-state", "still");
+    }
+  });
+
+  $("#add-animal").on("click", function(event) {
+    event.preventDefault();
+    var newAnimal = $("input").eq(0).val();
+
+    if (newAnimal.length > 2) {
+      animals.push(newAnimal);
+    }
+
+    populateButtons(animals, "animal-button", "#animal-buttons");
+
+  });
+
+  populateButtons(animals, "animal-button", "#animal-buttons");
+});
